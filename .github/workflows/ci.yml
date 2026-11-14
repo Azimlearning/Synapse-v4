@@ -37,7 +37,8 @@ jobs:
 
   python:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The suite takes about an hour (real Chromium renders); 45 minutes cancelled every run from 2026-10-25 on.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

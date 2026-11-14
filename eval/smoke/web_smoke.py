@@ -344,6 +344,10 @@ def main() -> int:
             stage_frame.locator("[data-synapse-action='record']").first.click()
             stage_frame.locator("input[data-synapse-control='load']").first.focus()
             page.keyboard.press("End")
+            # The mass bench draws its range bar only while the bar has focus. A mouse press on Record takes the focus away, the bar collapses, Record moves up and the click is lost
+            # (a known Kit defect, carried to v5: CHANGELOG 2026-11-14). So the test lets go of the bar first, as a person would by pressing Tab or clicking elsewhere.
+            stage_frame.locator("body").evaluate("() => (document.activeElement instanceof HTMLElement) && document.activeElement.blur()")
+            page.wait_for_timeout(300)
             stage_frame.locator("[data-synapse-action='record']").first.click()
             page.wait_for_function("document.querySelectorAll('[data-testid=lab-report] tbody tr').length === 2", timeout=5_000)
             report_text = page.inner_text("[data-testid=lab-report]")
@@ -410,7 +414,7 @@ def main() -> int:
             tool_names = wide.evaluate(
                 "[...document.querySelectorAll(\"aside[aria-label='Lab bench'] [aria-label='Lab tools'] button, aside[aria-label='Lab bench'] [aria-label='Lab tools'] a\")].map(e => e.textContent.trim())"
             )
-            check("one compact tool group: Present, Share, Save offline, Full screen and the EN/BM switch", tool_names == ["Present", "Share", "Save offline", "Full screen", "EN", "BM"], str(tool_names))
+            check("one compact tool group: Present, Share, Save offline and Full screen (the EN/BM switch sits in the top bar)", tool_names == ["Present", "Share", "Save offline", "Full screen"], str(tool_names))
             check("the lab is one bordered frame (one article in the lab pane)", wide.locator("aside[aria-label='Lab bench'] article").count() == 1)
             visible_titles = wide.evaluate(
                 "[...document.querySelectorAll(\"aside[aria-label='Lab bench'] h1, aside[aria-label='Lab bench'] h2\")].filter(e => e.getBoundingClientRect().width > 4 && e.textContent.includes(\"Hooke\")).length"
