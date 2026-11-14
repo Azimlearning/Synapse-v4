@@ -172,7 +172,10 @@ class SpendLedger:
             return max(min(room), 0.0)
 
     def reserve(self, estimate_usd: float) -> Reservation:
-        """Claim budget for one call, or raise SpendCapExceeded. Call before the provider."""
+        """Claim budget for one call, or raise SpendCapExceeded. Call before the provider. A call that cannot cost anything (a free model, D-83) claims nothing and
+        is never refused: a cap that is used up must still let the free providers answer."""
+        if estimate_usd <= 0:
+            return Reservation(0.0)
         with self._lock:
             if self._cap is not None:
                 spent = self.month_total()

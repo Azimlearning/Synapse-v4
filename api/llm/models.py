@@ -15,3 +15,13 @@ ANTHROPIC_MODELS: dict[Tier, str] = {
     "standard": "claude-sonnet-5-5",
     "light": "claude-haiku-5-5",
 }
+
+DEFAULT_FREE_CHAIN: tuple[str, ...] = (
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "google/gemma-4-31b-it:free",
+    "inclusionai/ling-3.2-flash:free",
+)
+"""The free OpenRouter models tried, in this order, before the paid Anthropic provider (D-83). Checked against openrouter.ai/api/v1/models on 2026-11-14: all
+three are listed with a zero price and room for the output we ask for. Free models are withdrawn and renamed without notice: override the list with LLM_FREE_CHAIN
+(at most MAX_FREE_CHAIN ids, each ending ':free') and re-check it before a demo."""
+MAX_FREE_CHAIN = 3

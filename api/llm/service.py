@@ -2,7 +2,7 @@
 # dropped (P3 re-introduces a budget when there is a planner), stdlib logging, this repo's errors.
 """The LLM seam. Nothing else in the codebase calls a provider (hard constraint 8).
 
-complete() tries the primary, then the fallback, on any ProviderFailure. Before each attempt it reserves that attempt's
+complete() tries the primary, then each fallback in order (D-83: up to three free models, then the paid provider), on any ProviderFailure. Before each attempt it reserves that attempt's
 worst-case cost against the monthly cap; a refusal there happens before the provider is invoked. Every attempt, including
 failed ones, is written to the spend ledger.
 """
@@ -10,6 +10,7 @@ failed ones, is written to the spend ledger.
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from dataclasses import replace
 
 from api.core.errors import BadRequest, ProviderRejected, ProviderUnavailable, SpendCapExceeded
@@ -22,8 +23,10 @@ log = logging.getLogger(__name__)
 
 
 class LLMService:
-    def __init__(self, primary: Provider, fallback: Provider | None, ledger: SpendLedger, *, prompt_caching: bool = False):
-        self._providers = [primary] + ([fallback] if fallback is not None else [])
+    def __init__(self, primary: Provider, fallback: Provider | Sequence[Provider] | None, ledger: SpendLedger, *, prompt_caching: bool = False):
+        """`fallback` is one provider or an ordered list of them (D-83: free models first, the paid one last): each is tried in turn on a ProviderFailure."""
+        rest: list[Provider] = [] if fallback is None else list(fallback) if isinstance(fallback, Sequence) else [fallback]
+        self._providers = [primary, *rest]
         self._ledger = ledger
         self._prompt_caching = prompt_caching
         """Ask providers to cache every system prompt (PROMPT_CACHING, off by default). The ledger prices what comes back; see api/llm/pricing.py."""

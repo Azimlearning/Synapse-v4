@@ -1,10 +1,73 @@
 {
   "_about": "Questions each library lab is known to answer, remembered word for word by the library seed (W19), so they are served from the library with no model call whatever the coverage rule says. The web page's quick starts are here. Keyed by Plan id.",
-  "hookes_amali": ["Why does a spring stretch when I hang a weight on it?", "How does the extension of a spring depend on the load?"],
-  "ohm_explorer": ["What happens to the current if I raise the resistance in a circuit?"],
-  "pressure_depth": ["How does the pressure change as a diver goes deeper in water?"],
-  "titration_virtual": ["How do I find the concentration of an acid by titration?"],
-  "yeast_fermentation_lab": ["Why does yeast make limewater go milky?"],
-  "newton_cannonball": ["What is Newton's cannonball, and how does a satellite stay in orbit?"],
-  "planet_gravity": ["How much would I weigh on Jupiter compared with Earth?", "How does gravity change on different planets?", "Can you simulate the difference in gravitational strength on each planet in my solar system?"]
+  "hookes_amali": [
+    "Why does a spring stretch when I hang a weight on it?",
+    "How does the extension of a spring depend on the load?",
+    "Explain Hooke's law",
+    "What is Hooke's law?",
+    "How does force relate to the extension of a spring?"
+  ],
+  "ohm_explorer": [
+    "What happens to the current if I raise the resistance in a circuit?"
+  ],
+  "pressure_depth": [
+    "How does the pressure change as a diver goes deeper in water?"
+  ],
+  "titration_virtual": [
+    "How do I find the concentration of an acid by titration?",
+    "How do I find the concentration of KOH by titration?",
+    "How do I find the concentration of sodium hydroxide by titration?",
+    "How do I do a titration?"
+  ],
+  "yeast_fermentation_lab": [
+    "Why does yeast make limewater go milky?",
+    "How does yeast fermentation work?",
+    "What happens when yeast ferments glucose?",
+    "How do I rehearse the yeast fermentation practical?"
+  ],
+  "newton_cannonball": [
+    "What is Newton's cannonball, and how does a satellite stay in orbit?",
+    "What is Newton's cannonball?",
+    "How does a satellite stay in orbit around the Earth?",
+    "What speed does a rocket need to escape the Earth?"
+  ],
+  "planet_gravity": [
+    "How much would I weigh on Jupiter compared with Earth?",
+    "How does gravity change on different planets?",
+    "Can you simulate the difference in gravitational strength on each planet in my solar system?"
+  ],
+  "refraction_lab": [
+    "How does light bend when it enters glass?",
+    "Why does a straw look bent in a glass of water?"
+  ],
+  "boyle_law_lab": [
+    "What happens to the pressure of a gas when I squeeze it?"
+  ],
+  "buoyancy_lab": [
+    "Why does a ship float but a coin sink?"
+  ],
+  "wave_speed_lab": [
+    "How are the frequency and wavelength of a wave related to its speed?"
+  ],
+  "half_life_lab": [
+    "How does a radioactive sample decay over time?"
+  ],
+  "osmosis_mass_lab": [
+    "What happens to a potato strip in salt water?"
+  ],
+  "ph_scale_lab": [
+    "How does the pH scale relate to hydrogen ion concentration?"
+  ],
+  "transformer_lab": [
+    "How does a transformer step a voltage up or down?"
+  ],
+  "specific_heat_lab": [
+    "How much energy does it take to heat water?"
+  ],
+  "compensation_point": [
+    "How does light intensity affect photosynthesis in a leaf?"
+  ],
+  "rate_of_reaction": [
+    "How do I measure the rate of a reaction?"
+  ]
 }

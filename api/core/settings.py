@@ -16,6 +16,8 @@ from typing import Literal
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from api.llm.models import DEFAULT_FREE_CHAIN, MAX_FREE_CHAIN
+
 ENV_SETUP_DOC = "refdocs/guides/env_setup.md"
 
 Mode = Literal["fake", "live"]
@@ -84,9 +86,32 @@ class Settings(BaseSettings):
     """HMAC key that signs stored Environments (A-19). Keep it OUTSIDE the data directory. Unset: rows are unsigned and the gate trusts the store."""
     anthropic_api_key: SecretStr | None = None
     openrouter_api_key: SecretStr | None = None
+    llm_free_chain: str = ""
+    """Free OpenRouter models tried before the paid provider (D-83), comma separated, in order, at most three, each ending ':free'. Empty: the default chain
+    (`api.llm.models.DEFAULT_FREE_CHAIN`) whenever OPENROUTER_API_KEY is set. 'off': no free models, Anthropic only (the old behaviour)."""
     llm_monthly_cap_usd: float | None = None
     llm_total_cap_usd: float | None = None
     """An all-time budget for the whole project, enforced beside the monthly cap (which resets on the 1st). Unset: only the monthly cap applies."""
+
+    def free_chain(self) -> tuple[str, ...]:
+        """The free models to try before the paid one, in order: empty without an OpenRouter key or when LLM_FREE_CHAIN is 'off'."""
+        if not _has(self.openrouter_api_key):
+            return ()
+        raw = self.llm_free_chain.strip()
+        if raw.lower() in ("off", "none"):
+            return ()
+        if not raw:
+            return DEFAULT_FREE_CHAIN
+        return tuple(m.strip() for m in raw.split(",") if m.strip())
+
+    def free_chain_problem(self) -> str | None:
+        chain = self.free_chain()
+        if len(chain) > MAX_FREE_CHAIN:
+            return f"at most {MAX_FREE_CHAIN} models, got {len(chain)}"
+        bad = [m for m in chain if not (m.endswith(":free") or m == "openrouter/free")]
+        if bad:
+            return f"only free models are allowed (ids ending ':free'); not free: {', '.join(bad)}"
+        return None
 
     def resolved_ledger_path(self) -> Path:
         return self.ledger_path if self.ledger_path is not None else self.data_dir / "ledger.db"
@@ -97,6 +122,9 @@ class Settings(BaseSettings):
         if self.synapse_llm_mode == "live":
             if not _has(self.anthropic_api_key):
                 missing.append(("ANTHROPIC_API_KEY", "required when SYNAPSE_LLM_MODE=live"))
+            problem = self.free_chain_problem()
+            if problem is not None:
+                missing.append(("LLM_FREE_CHAIN", problem))
             if self.llm_monthly_cap_usd is None or self.llm_monthly_cap_usd <= 0:
                 missing.append(("LLM_MONTHLY_CAP_USD", "required (a positive number) when SYNAPSE_LLM_MODE=live"))
             if not self.resolved_ledger_path().is_absolute():

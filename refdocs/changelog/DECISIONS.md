@@ -674,6 +674,22 @@ The lane names and labels are the agent's elaboration of the owner's idea (A-1).
 
 **Trade-offs / rejected.** Every update is a merge plus a second push. Older docs and commit messages still name events; history is not rewritten. Rejected: a script that strips paths before pushing (the mirror would stop sharing history with `main`); keeping business files on `main` (one merge from public).
 
+## D-83: Free OpenRouter models first, the paid Anthropic key last (2026-11-14)
+
+**Decision.** In live mode, with `OPENROUTER_API_KEY` set, a model call tries up to three free OpenRouter models in order (default `nvidia/nemotron-3-ultra-550b-a55b:free`, `google/gemma-4-31b-it:free`, `inclusionai/ling-3.2-flash:free`; override with `LLM_FREE_CHAIN`, `off` restores Anthropic only) and falls to the paid Anthropic provider only when all of them fail. Any provider failure moves the call on. The OpenRouter provider accepts only `:free` model ids, so it cannot bill. A failing model is skipped for a cool-down (the `Retry-After`, else 60 s for a rate limit, 300 s for a refused key, 900 s for a withdrawn model). The ledger no longer refuses a call whose estimate is zero, so a used-up cap still lets the free models answer; the paid provider is refused as before (hard constraint 8 holds: only paid calls can exceed a cap).
+
+**Why.** The owner's request: free models get rate limited, so use several as fallbacks for each other and keep the paid key as the last choice. The caps were nearly spent, so a library miss could end in a refused run.
+
+**Trade-offs / rejected.** OpenRouter's free tier is 20 requests a minute and 50 a day (1000 a day after 10 credits have ever been bought), and one generated lab makes about 14 calls, so without credits the free chain covers about three labs a day. Free models are likely to write worse pages and to fail verification more often; the verifier still gates every page (hard constraint 1) and the lane label is unchanged. Free endpoints may log prompts, so nothing personal may be sent. Free model ids change without notice. Mid-run fall-through can leave a first model's partial text in the build log. Rejected: paid OpenRouter models (a second paid route to govern), per-purpose routing and skipping free models on retries (until a verified rate per model is measured), one HTTP-Referer or X-Title header (it would name the project to a third party). `ASSUMED:` that a free model's verified-page rate is good enough to lead with; measure it on the golden set before the next demo.
+
+## D-84: Synapse v4 is closed out after the CodeFest finale; v5 carries the work (2026-11-14)
+
+**Decision.** The CodeFest '26 Grand Finale presentation (14 November 2026) was given on v4, and v4 is now frozen: its last commit is the closeout commit of this date. Every later Synapse change is made in Synapse v5 (`../Synapse-v5`, whose `v4` remote points at this repository). Nothing more is merged here except a security or secrets fix. The `codefest` branch keeps its event record and gets the finale entry; the result is added by the owner.
+
+**Why.** The owner set it: v4 is the entry that was presented, and v5 finishes the GenUI plan (V5-D01 to V5-D15). A frozen v4 stays a faithful record of what was shown.
+
+**Trade-offs / rejected.** Known v4 gaps stay open here and are listed in the changelog entry of this date: no teacher review, no learner study, no eval delta for the latest prompt versions, no measured verified-page rate per free model, the hosted deployment never gated (hard constraint 12 still applies to any public exposure). Rejected: carrying on in v4 in parallel with v5 (two codebases to keep honest, and the Kit and library are copied into v5).
+
 ## Working assumptions (`ASSUMED:`)
 
 Not decisions: guesses made to keep moving. Each one must be confirmed or killed before anything load-bearing is built on it. When one is resolved, delete it here and write a real ADR above. The full numbered list (A-1 to A-18) lives in `refdocs/synapse-v4-PRD.md` section 8; the load-bearing ones:

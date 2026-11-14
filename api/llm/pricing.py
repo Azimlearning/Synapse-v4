@@ -50,6 +50,8 @@ def _normalise(model: str) -> str:
 def price_for(provider: str, model: str) -> tuple[float, float]:
     if provider in FREE_PROVIDERS:
         return (0.0, 0.0)
+    if provider == "openrouter" and (model.endswith(":free") or model == "openrouter/free"):
+        return (0.0, 0.0)  # D-83: only free variants are ever built (the provider refuses any other id), so this can never under-count a paid model
     return PRICES_PER_MTOK.get(_normalise(model), _FALLBACK_PRICE)
 
 

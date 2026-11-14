@@ -1,5 +1,7 @@
 # Publishing
 
+> **v4 is frozen (D-84, 2026-11-14).** The closeout commit was pushed once to both remotes below. Nothing more is pushed from v4 except a security or secrets fix.
+
 | Branch | Remote | Repository | Visibility | Holds |
 |---|---|---|---|---|
 | `main` | `origin` | Synapse-v4 | Private | Product development, no event context |

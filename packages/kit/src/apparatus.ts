@@ -283,10 +283,21 @@ const DRAW: Record<string, Draw> = {
     }
   },
   leaf(b) {
-    b.el("circle", { cx: "20", cy: "20", r: "11", fill: "var(--syn-gold)" });
+    // The sun is the grip (W17): it slides from the top corner down towards the plant as the light rises, along the line the catalogue gives (`grabs.light`).
+    const sunAt = (s: Record<string, number>): [number, number] => {
+      const t = clamp(s.light ?? 0);
+      return [18 + t * 40, 14 + t * 24];
+    };
+    b.el("circle", { r: "11", fill: "var(--syn-gold)" }, (s) => {
+      const [x, y] = sunAt(s);
+      return { cx: f(x), cy: f(y) };
+    });
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * 2 * Math.PI;
-      b.el("line", { x1: f(20 + 14 * Math.cos(a)), y1: f(20 + 14 * Math.sin(a)), x2: f(20 + 22 * Math.cos(a)), y2: f(20 + 22 * Math.sin(a)), stroke: "var(--syn-gold)", "stroke-width": "2.5" }, (s) => ({ opacity: f(0.1 + clamp(s.light ?? 0) * 0.9) }));
+      b.el("line", { stroke: "var(--syn-gold)", "stroke-width": "2.5" }, (s) => {
+        const [x, y] = sunAt(s);
+        return { x1: f(x + 14 * Math.cos(a)), y1: f(y + 14 * Math.sin(a)), x2: f(x + 22 * Math.cos(a)), y2: f(y + 22 * Math.sin(a)), opacity: f(0.1 + clamp(s.light ?? 0) * 0.9) };
+      });
     }
     b.el("rect", { x: "30", y: "52", width: "64", height: "80", rx: "6", fill: LIQ, "fill-opacity": "0.3", stroke: LINE, "stroke-width": "2.5" });
     b.el("path", { d: "M62 128 Q50 100 56 80 Q70 92 64 128 Z M62 116 Q78 96 82 84 Q70 104 66 120 Z", fill: "#43a047", stroke: LINE, "stroke-width": "1.5" });

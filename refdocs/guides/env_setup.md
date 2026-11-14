@@ -23,7 +23,8 @@ Last updated: 2026-10-16
 
 | Variable | Default if unset | What it changes |
 |---|---|---|
-| `OPENROUTER_API_KEY` | none | Enables an OpenRouter fallback route when Anthropic is unavailable or out of credit |
+| `OPENROUTER_API_KEY` | none | Turns on the free-model chain (D-83): up to three free OpenRouter models are tried before the paid Anthropic key. Free tier: 20 requests a minute and 50 a day (1000 a day once 10 credits have ever been bought). Only `:free` models are ever called |
+| `LLM_FREE_CHAIN` | the three defaults in `api/llm/models.py` | Comma separated free model ids in the order to try them, at most three, each ending `:free`; `off` turns the free chain off. Free ids are withdrawn without notice: re-check them at `openrouter.ai/models?max_price=0`. Not a secret |
 | `KIT_DIST_DIR` | `./packages/kit/dist` | Where the built Kit lives (`<semver>/core.js`, `manifest.json`). The API serves it at `/vendor/kit/` and the render harness reads it. Build it with `pnpm --filter @synapse/kit build` |
 | `VERIFY_INTERACTION_SECONDS` | `10` | How long the render harness presses controls and inputs while verifying one Environment (the longer, the more conditional behaviour it can reach). Tests use `1`. Not a secret |
 | `CORPUS_DIR` | none | A local folder of textbook text (one `.jsonl` per document, made by `api/evidence/ingest.py`). Never committed (rule 13). Unset means no citation can be verified, so `kit-verified` cannot be minted. Also holds `citations.json` (the quotations the committed pointer ids resolve to; local only). The API reads the corpus once per process: restart it after re-ingesting. Not a secret, but the contents are copyrighted |

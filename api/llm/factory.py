@@ -1,5 +1,5 @@
-# Adapted from Azimlearning/Arcana-v2, api/llm/factory.py @ 21c6dcf5. Read in full. Change: live mode builds only the Anthropic
-# provider (OpenRouter is not built), and only after the key, the cap and an absolute ledger path are all present.
+# Adapted from Azimlearning/Arcana-v2, api/llm/factory.py @ 21c6dcf5. Read in full. Changes: live mode builds the Anthropic provider only after the key, the
+# cap and an absolute ledger path are all present; with an OpenRouter key it puts up to three free models in front of it (D-83).
 """Build the LLM service for the configured mode (SYNAPSE_LLM_MODE)."""
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from api.core.settings import ConfigError, Settings
 from api.llm.ledger import SpendLedger, engine_for
 from api.llm.providers.anthropic import AnthropicProvider
 from api.llm.providers.fake import FakeProvider
+from api.llm.providers.openrouter import OpenRouterProvider
 from api.llm.service import LLMService
 from api.llm.types import LLMRequest
 
@@ -48,7 +49,18 @@ def build_llm_service(
     _require_live_prerequisites(settings)
     if settings.anthropic_api_key is None:
         raise ProviderUnavailable("Live mode needs ANTHROPIC_API_KEY; no provider was built.")
-    # No OpenRouter fallback is built (CLAUDE.md names it optional): a failed call goes to the pipeline's degrade ladder instead.
-    return LLMService(
-        AnthropicProvider(settings.anthropic_api_key.get_secret_value()), None, ledger, prompt_caching=settings.prompt_caching
-    )
+    paid = AnthropicProvider(settings.anthropic_api_key.get_secret_value())
+    free = free_providers(settings)
+    if not free:
+        return LLMService(paid, None, ledger, prompt_caching=settings.prompt_caching)
+    # D-83: the free models first, in order, and the paid Anthropic provider last. Any ProviderFailure (a rate limit, an outage, a withdrawn model) moves the call on.
+    return LLMService(free[0], [*free[1:], paid], ledger, prompt_caching=settings.prompt_caching)
+
+
+def free_providers(settings: Settings) -> list[OpenRouterProvider]:
+    """One provider per free model in the configured chain, in order; empty when no OpenRouter key is set or the chain is turned off."""
+    chain = settings.free_chain()
+    if not chain or settings.openrouter_api_key is None:
+        return []
+    key = settings.openrouter_api_key.get_secret_value()
+    return [OpenRouterProvider(key, model) for model in chain]

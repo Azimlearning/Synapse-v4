@@ -108,6 +108,10 @@
         "light": {
           "source": "light",
           "full": 16
+        },
+        "rate": {
+          "source": "light",
+          "full": 16
         }
       }
     }

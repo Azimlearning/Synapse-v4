@@ -327,3 +327,66 @@ def test_the_all_time_budget_setting_reaches_the_ledger_the_service_writes_to(mo
     ledger = build_ledger(settings)
     assert settings.llm_total_cap_usd == 2.0 and ledger.remaining_usd() == 2.0
     ledger.close()
+
+
+# ---- D-83: free models first, the paid provider last ----
+
+
+def _free(name: str, **kw) -> FakeProvider:  # noqa: ANN003
+    return FakeProvider(name="openrouter", models={"heavy": name, "standard": name, "light": name}, **kw)
+
+
+@pytest.mark.usefixtures("clean_env")
+async def test_a_chain_tries_each_free_model_in_order_and_ends_on_the_paid_one(tmp_path: Path) -> None:
+    free_a, free_b, paid = _free("a:free", fail_with="HTTP 429"), _free("b:free", fail_with="HTTP 503"), FakeProvider(name="anthropic")
+    result = await LLMService(free_a, [free_b, paid], _ledger(tmp_path, 5.0)).complete(LLMRequest(prompt="q", purpose="explain"))
+    assert (len(free_a.calls), len(free_b.calls), len(paid.calls)) == (1, 1, 1)
+    assert result.provider == "anthropic" and result.fell_back
+
+
+@pytest.mark.usefixtures("clean_env")
+async def test_the_first_free_model_that_answers_stops_the_chain_and_costs_nothing(tmp_path: Path) -> None:
+    free_a, free_b, paid = _free("a:free", fail_with="HTTP 429"), _free("b:free"), FakeProvider(name="anthropic")
+    ledger = _ledger(tmp_path, 5.0)
+    result = await LLMService(free_a, [free_b, paid], ledger).complete(LLMRequest(prompt="q", purpose="explain", max_tokens=1000))
+    assert result.provider == "openrouter" and result.model == "b:free" and result.cost_usd == 0.0
+    assert paid.calls == [] and ledger.month_total() == 0.0
+
+
+@pytest.mark.usefixtures("clean_env")
+async def test_an_exhausted_cap_still_lets_the_free_models_answer_but_never_the_paid_one(tmp_path: Path) -> None:
+    ledger = _ledger(tmp_path, 0.0001)  # no room for any paid call
+    paid = FakeProvider(name="anthropic")
+    assert (await LLMService(_free("a:free"), [paid], ledger).complete(LLMRequest(prompt="q", purpose="explain", max_tokens=4000))).provider == "openrouter"
+    with pytest.raises(SpendCapExceeded):
+        await LLMService(_free("a:free", fail_with="HTTP 429"), [paid], ledger).complete(LLMRequest(prompt="q", purpose="explain", max_tokens=4000))
+    assert paid.calls == []
+
+
+def test_the_free_chain_is_configured_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    from api.llm.models import DEFAULT_FREE_CHAIN
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-or-key")
+    s = load_settings(env_file=None)
+    assert s.free_chain() == DEFAULT_FREE_CHAIN and len(DEFAULT_FREE_CHAIN) <= 3
+    assert s.model_copy(update={"llm_free_chain": "off"}).free_chain() == ()
+    assert s.model_copy(update={"llm_free_chain": "a/b:free, c/d:free"}).free_chain() == ("a/b:free", "c/d:free")
+    assert s.model_copy(update={"llm_free_chain": "a:free,b:free,c:free,d:free"}).free_chain_problem()
+    assert "not free" in (s.model_copy(update={"llm_free_chain": "anthropic/claude-opus-5-5"}).free_chain_problem() or "")
+    monkeypatch.delenv("OPENROUTER_API_KEY")
+    assert load_settings(env_file=None).free_chain() == ()  # no key, no free models
+
+
+@pytest.mark.usefixtures("clean_env")
+def test_live_factory_puts_the_free_models_in_front_of_anthropic(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("SYNAPSE_LLM_MODE", "live")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-ant-key")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-or-key")
+    monkeypatch.setenv("LLM_MONTHLY_CAP_USD", "5")
+    monkeypatch.setenv("LEDGER_PATH", str(tmp_path / "ledger.db"))
+    settings = load_settings(env_file=None)
+    service = build_llm_service(settings, build_ledger(settings))
+    assert [p.name for p in service._providers] == ["openrouter", "openrouter", "openrouter", "anthropic"]  # noqa: SLF001
+    monkeypatch.setenv("LLM_FREE_CHAIN", "off")
+    off = load_settings(env_file=None)
+    assert [p.name for p in build_llm_service(off, build_ledger(off))._providers] == ["anthropic"]  # noqa: SLF001

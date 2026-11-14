@@ -137,9 +137,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return JSONResponse(envelope.model_dump(), status_code=HTTP_STATUS["validation_failed"])
 
     @app.get("/health")
-    async def health() -> dict[str, str]:
+    async def health() -> dict[str, str | list[str]]:
         # `llm_mode` lets the web page say plainly when the answers come from the offline fake model (only the stored library answers a question then).
-        return {"status": "ok", "llm_mode": settings.synapse_llm_mode}
+        # `llm_chain` is the order models are tried in live mode (D-83): free ones first, the paid one last. Model ids only, never a key.
+        chain = [*settings.free_chain(), "anthropic"] if settings.synapse_llm_mode == "live" else []
+        return {"status": "ok", "llm_mode": settings.synapse_llm_mode, "llm_chain": chain}
 
     def checked_question(body: AskRequest) -> str:
         question = body.question.strip()
