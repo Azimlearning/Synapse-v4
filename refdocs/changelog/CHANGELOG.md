@@ -28,6 +28,19 @@ Rules that make this file worth keeping:
 
 ## [Unreleased]
 
+### 2026-11-09: Synapse v5 design documents written (outside this repository)
+- **Changed:** nothing in v4. The v5 design set (24 documents: PRD, architecture, Lab Script spec, caching, streaming, verification, roadmap, decisions V5-D01 to V5-D15, backlog) is in `../Synapse-v5/`.
+- **Decided:** the owner accepted the direction: library for repeated questions only, one writer combining Free and Kit parts that streams, change-this-lab, v5 built on the owner's GenUI plan. Recommended (not yet accepted): start v5 as a new private repository copied from v4 with history; v4 stays frozen while v5 is built.
+- **Verified:** documents written and read back; no code run, no paid call.
+
+### 2026-11-01: Research on speed, visuals and deployment, compared with ChatGPT's Intelligent UI
+- **Changed:** new `refdocs/evidence/2026-11-01-speed-visual-deploy-research.md` and its row in the evidence README. No product code.
+- **Diagnosed:** from `data/traces.jsonl`: Free on Opus takes about 4 minutes (220 s median of model calls), Compose about 24 s. 9 of the latest 11 Free runs wrote at least two pages, and the retries in the six newest were `too long`; the trace does not say which limit was hit.
+- **Decided:** nothing. Three owner decisions are listed in the note (a paid Sonnet comparison, the deploy waiver and corpus, a draft view that would change the call of 2026-10-22).
+- **Verified:** ran throwaway analysis and render scripts over the local traces and store (read-only), and looked at the labs at 1280 and 360 px. Motion, dragging and dark mode were not reviewed. No tests run; no paid call.
+- **Deviations:** corrected the same day: all 6 Sonnet Free pages in the traces were refused, so the Sonnet time estimates are withdrawn. The owner set the direction: library for repeated questions only, and one Free plus Kit writer that streams. No ADR, plan or code yet.
+- **Known issues / next steps:** `GENERATION_TIER` in `.env` should go back to `standard`; the setting was not read or changed here. The last four CI runs on `main` failed or were cancelled.
+
 ### 2026-10-31: Committed the W19 and W20 work; publishing split into a product branch and a mirror branch (D-82)
 - **Changed:** committed the work held since 2026-10-29 (W19 generation pipeline v2, W20 lab design, D-76 to D-81). `README.md` brought up to date (it still said no paid call had been made and 34 components). `.gitignore` keeps `founder/` and `refdocs/business/` out of the repo. `refdocs/guides/publishing.md` is new. `api/pipeline/test_plan_fermentation.py`: three tests pinned the dial the owner replaced with drag and drop on 2026-10-29; they now pin the bench as built, and PLAN-018 is exercised by putting a dial on the Plan. The cost projection and the Environments report were regenerated (no model call).
 - **Decided:** D-82. **Declared amendment to the L4 case set:** regenerated with `python -m eval.l4.cases`, 80 cases (49 planted defects, 31 true controls), new hash in `data/l4/cases.sha256`. Why: the golden Plans changed on 2026-10-29 (the planets Plan added, the fermentation control changed), so the committed set no longer matched them. Earlier L4 measurements ran on the previous set.
